@@ -1,10 +1,19 @@
-from buzz.transformers_whisper import load_model
+import platform
+import pytest
+
+from buzz.transformers_whisper import TransformersWhisper
+from tests.audio import test_audio_path
 
 
 class TestTransformersWhisper:
+    @pytest.mark.skipif(
+        platform.system() == "Darwin",
+        reason="Not supported on Darwin",
+    )
     def test_should_transcribe(self):
-        model = load_model('openai/whisper-tiny')
+        model = TransformersWhisper("openai/whisper-tiny")
         result = model.transcribe(
-            audio='testdata/whisper-french.mp3', language='fr', task='transcribe')
+            audio=test_audio_path, language="fr", task="transcribe"
+        )
 
-        assert 'Bienvenue dans Passe' in result['text']
+        assert "Bienvenue dans Passe" in result["text"]
