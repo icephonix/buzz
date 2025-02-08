@@ -6,6 +6,7 @@
 #define AppIconPath "assets\buzz.ico"
 #define AppSourcePath "dist\Buzz\*"
 #define OutputDir "dist"
+#define AppRegKey "Software\Buzz"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -43,3 +44,37 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
+[Registry]
+Root: HKCU; Subkey: "{#AppRegKey}"
+
+[Code]
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    if RegKeyExists(HKEY_CURRENT_USER, '{#AppRegKey}') then
+      if MsgBox('Do you want to delete Buzz settings?', mbConfirmation, MB_YESNO) = IDYES
+      then
+        RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER, '{#AppRegKey}');
+  end;
+end;
+procedure DeleteFileOrFolder(FilePath: string);
+begin
+  if FileExists(FilePath) then
+  begin
+    DeleteFile(FilePath);
+  end
+  else if DirExists(FilePath) then
+  begin
+    DelTree(FilePath, True, True, True);
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssInstall then
+  begin
+    DeleteFileOrFolder(ExpandConstant('{app}\Buzz.exe'));
+    DeleteFileOrFolder(ExpandConstant('{app}\_internal'));
+  end;
+end;
